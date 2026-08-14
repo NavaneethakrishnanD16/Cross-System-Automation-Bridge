@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: bridge-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bridge-network
+
+  app:
+    build: .
+    container_name: bridge-app
+    ports:
+      - "${PORT:-4100}:4100"
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT:-4100}
+      - DATABASE_FILE=${DATABASE_FILE:-./data/bridge.db}
+      - BRIDGE_CRON_SCHEDULE=${BRIDGE_CRON_SCHEDULE:-*/5 * * * *}
+      - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_DB=${REDIS_DB:-0}
+      - ENABLE_REDIS_LOCKING=${ENABLE_REDIS_LOCKING:-true}
+      - ENABLE_REDIS_CACHING=${ENABLE_REDIS_CACHING:-true}
+      - LOCK_TTL_SECONDS=${LOCK_TTL_SECONDS:-300}
+      - CACHE_TTL_SECONDS=${CACHE_TTL_SECONDS:-60}
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+    networks:
+      - bridge-network
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+
+networks:
+  bridge-network:
+    driver: bridge
