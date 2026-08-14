@@ -1,7 +1,5 @@
 # Cross-System Automation Bridge (Preventive Maintenance → Ticketing)
 
-![CI](https://github.com/NavaneethakrishnanD16/actions/workflows/ci.yml/badge.svg)
-
 A scheduled service that detects due preventive-maintenance events in one
 system and automatically creates a corresponding ticket in a separate
 ticketing system — with a database-enforced guarantee that the same event
